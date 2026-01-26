@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPM Daily Payment Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 20px -4px rgba(0,0,0,0.12);
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 16px rgba(59,130,246,0.35);
+    }
+    .btn-red {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-red:hover {
+      background: #dc2626;
+      transform: translateY(-2px) scale(1.02);
+    }
+    th {
+      background: rgba(59,130,246,0.07);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      padding: 0.9rem 1rem;
+      text-align: left;
+      color: #475569;
+    }
+    tr { transition: background-color 0.18s ease; }
+    tr:hover td { background: rgba(59,130,246,0.03); }
+    td { padding: 0.9rem 1rem; border-top: 1px solid #f1f5f9; }
+    .table-row {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: rowAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    @keyframes rowAppear { to { opacity: 1; transform: translateY(0); } }
+    .alert-slide {
+      animation: slideInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes slideInDown {
+      from { transform: translateY(-30px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .app-container { max-width: 1440px; margin: 0 auto; padding: 1.5rem; }
+    @media (min-width: 1024px) { .app-container { padding: 2.5rem; } }
+    textarea {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.75rem;
+      padding: 1.1rem;
+      font-family: 'Courier New', monospace;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      resize: vertical;
+    }
+    textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="app-container py-5 flex justify-between items-center">
+      <h1 class="text-3xl font-bold flex items-center gap-2">
+        <span class="text-gray-800">RPM</span>
+        <span class="text-blue-600">Daily Payment</span>
+      </h1>
+    </div>
+  </header>
+
+  <main class="flex-grow py-10">
+    <div class="app-container">
+      <div id="alert" class="hidden card p-5 mb-8 border-l-4 alert-slide"></div>
+
+      <div class="card p-7 mb-10">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+          <i class="fas fa-file-import text-blue-600 text-2xl"></i> Paste Payment Request
+        </h2>
+        <textarea id="input-message" rows="10" class="w-full text-sm focus:ring-0" placeholder="Paste your payment request message here (Ctrl + V)..."></textarea>
+        <div class="mt-6 flex justify-end">
+          <button id="process-data" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Entry
+          </button>
+        </div>
+      </div>
+
+      <div id="history-section" class="card p-7 hidden">
+        <div class="flex justify-between items-center mb-7 flex-wrap gap-4">
+          <h2 class="text-xl font-bold flex items-center gap-3">
+            <i class="fas fa-history text-emerald-600 text-xl"></i> Payment History
+          </h2>
+          <div class="flex gap-4 flex-wrap">
+            <button id="export-all" class="btn btn-primary"><i class="fas fa-file-excel"></i> Export All</button>
+            <button id="clear-all" class="btn btn-red"><i class="fas fa-trash-can"></i> Clear All</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-gray-200">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr>
+                <th>SNo</th>
+                <th>Date</th>
+                <th>Ledger Name</th>
+                <th>Amount</th>
+                <th>Tr Type</th>
+                <th>UTR No</th>
+                <th>LR Br</th>
+                <th>LR No</th>
+                <th>Vehicle No</th>
+                <th>Challan No</th>
+                <th>DRS No</th>
+                <th>Remarks</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="app-container text-center text-sm text-gray-500">
+      © <span id="current-year"></span> RPM Logistics Pvt. Ltd.
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    let entries = [];
+    try { entries = JSON.parse(localStorage.getItem('paymentHistory') || '[]'); } catch(e) {}
+
+    const els = {
+      input: document.getElementById('input-message'),
+      alert: document.getElementById('alert'),
+      tableBody: document.getElementById('history-table-body'),
+      historySection: document.getElementById('history-section')
+    };
+
+    function showAlert(type, title, msg) {
+      const color = type === 'success' ? 'green' : type === 'error' ? 'red' : 'amber';
+      const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+      els.alert.innerHTML = `<div class="flex items-center gap-3"><i class="fas fa-${icon} text-xl text-${color}-600"></i><div><h3 class="font-semibold text-${color}-800">${title}</h3><p class="text-sm text-${color}-700 mt-1">${msg}</p></div></div>`;
+      els.alert.className = `card p-5 border-l-4 border-${color}-500 bg-${color}-50 text-${color}-800 alert-slide`;
+      els.alert.classList.remove('hidden');
+      setTimeout(() => els.alert.classList.add('hidden'), 5000);
+    }
+
+    function isValidFormat(text) {
+      const required = ['*Date:*', '*Ledger Name:*', '*Amount:*', '*Vehicle No:*'];
+      return required.every(f => text.includes(f));
+    }
+
+    function parseMessage(text) {
+      const d = {date:'',ledgerName:'',amount:'',trType:'',utrNo:'',lrBranch:'',lrNo:'',vehicleNo:'',challanNo:'',drsNo:'',remarks:''};
+      text.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l => {
+        if(l.includes('*Date:*'))       d.date       = l.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
+        if(l.includes('*Ledger Name:*')) d.ledgerName = l.split('*Ledger Name:*')[1]?.trim() || '';
+        if(l.includes('*Amount:*'))       d.amount      = l.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
+        if(l.includes('*Tr. Type:*'))     d.trType      = l.split('*Tr. Type:*')[1]?.trim() || '';
+        if(l.includes('*UTR No:*'))       d.utrNo       = l.split('*UTR No:*')[1]?.trim() || '';
+        if(l.includes('*LR Branch:*'))    d.lrBranch    = l.split('*LR Branch:*')[1]?.trim() || '';
+        if(l.includes('*LR No:*'))        d.lrNo        = l.split('*LR No:*')[1]?.trim() || '';
+        if(l.includes('*Vehicle No:*'))   d.vehicleNo   = l.split('*Vehicle No:*')[1]?.trim().toUpperCase() || '';
+        if(l.includes('*Challan No:*'))   d.challanNo   = l.split('*Challan No:*')[1]?.trim() || '';
+        if(l.includes('*DRS No:*'))       d.drsNo       = l.split('*DRS No:*')[1]?.trim() || '';
+        if(l.includes('*SP Remarks:*'))   d.remarks     = l.split('*SP Remarks:*')[1]?.trim() || '';
+      });
+      if (!d.date) d.date = new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
+      return d;
+    }
+
+    function isDuplicate(utr) {
+      if (!utr?.trim()) return false;
+      return entries.some(e => e.utrNo?.trim().toLowerCase() === utr.trim().toLowerCase());
+    }
+
+    function addEntry(entry) {
+      if (isDuplicate(entry.utrNo)) {
+        showAlert('error', 'Duplicate UTR', 'This UTR Number is already used.');
+        return false;
+      }
+      entries.unshift(entry);
+      localStorage.setItem('paymentHistory', JSON.stringify(entries));
+      renderTable();
+      els.historySection.classList.remove('hidden');
+      return true;
+    }
+
+    let isProcessingPaste = false;
+
+    function processText(text) {
+      if (!text.trim()) return;
+      if (!isValidFormat(text)) {
+        showAlert('error', 'Invalid Format', 'Required fields (*Date:*, *Ledger Name:*, *Amount:*, *Vehicle No:*) are missing.');
+        return;
+      }
+      const entry = parseMessage(text);
+      if (!entry.ledgerName || !entry.amount || !entry.vehicleNo) {
+        showAlert('error', 'Incomplete Data', 'Ledger Name, Amount, and Vehicle No are required.');
+        return;
+      }
+      if (addEntry(entry)) {
+        els.input.value = '';
+        showAlert('success', 'Added', 'Entry saved successfully');
+      }
+    }
+
+    // Paste handler – only one execution per paste
+    els.input.addEventListener('paste', (e) => {
+      if (isProcessingPaste) return;
+      isProcessingPaste = true;
+      setTimeout(() => { isProcessingPaste = false; }, 400);
+
+      const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+      els.input.value = pastedText;
+      setTimeout(() => processText(pastedText.trim()), 50);
+    });
+
+    // Manual Add button
+    document.getElementById('process-data').onclick = () => {
+      processText(els.input.value.trim());
+    };
+
+    function renderTable() {
+      els.tableBody.innerHTML = entries.length 
+        ? '' 
+        : '<tr><td colspan="13" class="text-center py-16 text-gray-400 font-medium">No entries yet</td></tr>';
+
+      entries.forEach((e, i) => {
+        const tr = document.createElement('tr');
+        tr.className = 'table-row';
+        tr.style.animationDelay = `${Math.min(i * 0.07, 1.2)}s`;
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${e.date}</td>
+          <td>${e.ledgerName}</td>
+          <td>${e.amount}</td>
+          <td>${e.trType}</td>
+          <td class="font-mono">${e.utrNo}</td>
+          <td>${e.lrBranch}</td>
+          <td>${e.lrNo}</td>
+          <td class="font-mono">${e.vehicleNo}</td>
+          <td>${e.challanNo}</td>
+          <td>${e.drsNo}</td>
+          <td>${e.remarks}</td>
+          <td class="text-right space-x-4">
+            <button onclick="editEntry(${i})" class="text-blue-600 hover:text-blue-800 transition-colors duration-200"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteEntry(${i})" class="text-red-600 hover:text-red-800 transition-colors duration-200"><i class="fas fa-trash-can"></i></button>
+          </td>`;
+        els.tableBody.appendChild(tr);
+      });
+    }
+
+    window.editEntry = i => {
+      const e = entries[i];
+      els.input.value = `💰 *Daily Payment Request*\n📅 *Date:* ${e.date}\n📋 *Ledger Name:* ${e.ledgerName}\n💰 *Amount:* ₹${e.amount}\n💳 *Tr. Type:* ${e.trType}\n🔢 *UTR No:* ${e.utrNo}\n🏢 *LR Branch:* ${e.lrBranch}\n📄 *LR No:* ${e.lrNo}\n🚗 *Vehicle No:* ${e.vehicleNo}\n📋 *Challan No:* ${e.challanNo}\n📑 *DRS No:* ${e.drsNo}\n📝 *SP Remarks:* ${e.remarks}`;
+      showAlert('info', 'Edit Mode', 'Make changes and click Add Entry');
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+
+    window.deleteEntry = i => {
+      if (!confirm('Delete this entry?')) return;
+      entries.splice(i,1);
+      localStorage.setItem('paymentHistory', JSON.stringify(entries));
+      renderTable();
+      if (!entries.length) els.historySection.classList.add('hidden');
+      showAlert('success', 'Deleted', 'Entry removed successfully');
+    };
+
+    document.getElementById('export-all').onclick = () => {
+      if (!entries.length) return showAlert('error','No Data','Nothing to export');
+      const data = entries.map((e,i)=>({
+        SNo: i+1,
+        Date: e.date,
+        'Ledger name': e.ledgerName,
+        Amount: e.amount,
+        'Tr Type': e.trType,
+        'Utr Number': e.utrNo,
+        'LR Br': e.lrBranch,
+        LRNUMBER: e.lrNo,
+        'Vehicle Number': e.vehicleNo,
+        'Challan No': e.challanNo,
+        'DRS Number': e.drsNo,
+        'Sp remarks': e.remarks
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Payments');
+      XLSX.writeFile(wb, `rpm_payments_${new Date().toISOString().slice(0,10)}.xlsx`);
+      showAlert('success','Exported','File downloaded successfully');
+    };
+
+    document.getElementById('clear-all').onclick = () => {
+      if (!confirm('Clear ALL entries permanently?')) return;
+      entries = [];
+      localStorage.setItem('paymentHistory','[]');
+      renderTable();
+      els.historySection.classList.add('hidden');
+      showAlert('success','Cleared','All entries removed');
+    };
+
+    if (entries.length) {
+      renderTable();
+      els.historySection.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
