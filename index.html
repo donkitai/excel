@@ -9,92 +9,26 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 20px -4px rgba(0,0,0,0.12);
-    }
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 16px rgba(59,130,246,0.35);
-    }
-    .btn-red {
-      background: #ef4444;
-      color: white;
-    }
-    .btn-red:hover {
-      background: #dc2626;
-      transform: translateY(-2px) scale(1.02);
-    }
-    th {
-      background: rgba(59,130,246,0.07);
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-      padding: 0.9rem 1rem;
-      text-align: left;
-      color: #475569;
-    }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 20px -4px rgba(0,0,0,0.12); }
+    .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 16px rgba(59,130,246,0.35); }
+    .btn-red { background: #ef4444; color: white; }
+    .btn-red:hover { background: #dc2626; transform: translateY(-2px) scale(1.02); }
+    th { background: rgba(59,130,246,0.07); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; padding: 0.9rem 1rem; text-align: left; color: #475569; }
     tr { transition: background-color 0.18s ease; }
     tr:hover td { background: rgba(59,130,246,0.03); }
     td { padding: 0.9rem 1rem; border-top: 1px solid #f1f5f9; }
-    .table-row {
-      opacity: 0;
-      transform: translateY(12px);
-      animation: rowAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    }
+    .table-row { opacity: 0; transform: translateY(12px); animation: rowAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
     @keyframes rowAppear { to { opacity: 1; transform: translateY(0); } }
-    .alert-slide {
-      animation: slideInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    @keyframes slideInDown {
-      from { transform: translateY(-30px); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
-    }
+    .alert-slide { animation: slideInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes slideInDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .app-container { max-width: 1440px; margin: 0 auto; padding: 1.5rem; }
     @media (min-width: 1024px) { .app-container { padding: 2.5rem; } }
-    textarea {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 0.75rem;
-      padding: 1.1rem;
-      font-family: 'Courier New', monospace;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      resize: vertical;
-    }
-    textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
-      outline: none;
-    }
+    textarea { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 1.1rem; font-family: 'Courier New', monospace; transition: border-color 0.2s, box-shadow 0.2s; resize: vertical; }
+    textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.12); outline: none; }
   </style>
 </head>
 <body>
@@ -213,14 +147,20 @@
       return d;
     }
 
-    function isDuplicate(utr) {
-      if (!utr?.trim()) return false;
-      return entries.some(e => e.utrNo?.trim().toLowerCase() === utr.trim().toLowerCase());
+    function hasDuplicateIdentifier(utr, lrNo) {
+      const normalizedUtr = utr?.trim().toLowerCase() || '';
+      const normalizedLr  = lrNo?.trim().toLowerCase() || '';
+
+      return entries.some(e => {
+        const eUtr = e.utrNo?.trim().toLowerCase() || '';
+        const eLr  = e.lrNo?.trim().toLowerCase() || '';
+        return (normalizedUtr && eUtr === normalizedUtr) || (normalizedLr && eLr === normalizedLr);
+      });
     }
 
     function addEntry(entry) {
-      if (isDuplicate(entry.utrNo)) {
-        showAlert('error', 'Duplicate UTR', 'This UTR Number is already used.');
+      if (hasDuplicateIdentifier(entry.utrNo, entry.lrNo)) {
+        showAlert('error', 'Duplicate Identifier', 'This UTR No or LR No is already used in another entry.');
         return false;
       }
       entries.unshift(entry);
