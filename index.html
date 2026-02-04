@@ -179,6 +179,7 @@
         return;
       }
       const entry = parseMessage(text);
+      // SP Remarks को mandatory नहीं बनाया — edit करके डालने पर भी allow
       if (!entry.ledgerName || !entry.amount || !entry.vehicleNo) {
         showAlert('error', 'Incomplete Data', 'Ledger Name, Amount, and Vehicle No are required.');
         return;
