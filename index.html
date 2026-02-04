@@ -15,6 +15,8 @@
     .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; gap: 0.5rem; }
     .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
     .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 16px rgba(59,130,246,0.35); }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-warning:hover { background: #d97706; transform: translateY(-2px) scale(1.02); }
     .btn-red { background: #ef4444; color: white; }
     .btn-red:hover { background: #dc2626; transform: translateY(-2px) scale(1.02); }
     th { background: rgba(59,130,246,0.07); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; padding: 0.9rem 1rem; text-align: left; color: #475569; }
@@ -51,9 +53,12 @@
           <i class="fas fa-file-import text-blue-600 text-2xl"></i> Paste Payment Request
         </h2>
         <textarea id="input-message" rows="10" class="w-full text-sm focus:ring-0" placeholder="Paste your payment request message here (Ctrl + V)..."></textarea>
-        <div class="mt-6 flex justify-end">
+        <div class="mt-6 flex justify-end gap-3">
           <button id="process-data" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add Entry
+          </button>
+          <button id="force-add" class="btn btn-warning">
+            <i class="fas fa-exclamation-triangle"></i> Force Add (Allow Duplicate)
           </button>
         </div>
       </div>
@@ -158,10 +163,13 @@
       });
     }
 
-    function addEntry(entry) {
-      if (hasDuplicateIdentifier(entry.utrNo, entry.lrNo)) {
+    function addEntry(entry, force = false) {
+      if (!force && hasDuplicateIdentifier(entry.utrNo, entry.lrNo)) {
         showAlert('error', 'Duplicate Identifier', 'This UTR No or LR No is already used in another entry.');
         return false;
+      }
+      if (force) {
+        showAlert('warning', 'Forced Entry', 'Entry added (duplicate UTR/LR allowed)');
       }
       entries.unshift(entry);
       localStorage.setItem('paymentHistory', JSON.stringify(entries));
@@ -172,21 +180,20 @@
 
     let isProcessingPaste = false;
 
-    function processText(text) {
+    function processText(text, force = false) {
       if (!text.trim()) return;
       if (!isValidFormat(text)) {
         showAlert('error', 'Invalid Format', 'Required fields (*Date:*, *Ledger Name:*, *Amount:*, *Vehicle No:*) are missing.');
         return;
       }
       const entry = parseMessage(text);
-      // SP Remarks को mandatory नहीं बनाया — edit करके डालने पर भी allow
       if (!entry.ledgerName || !entry.amount || !entry.vehicleNo) {
         showAlert('error', 'Incomplete Data', 'Ledger Name, Amount, and Vehicle No are required.');
         return;
       }
-      if (addEntry(entry)) {
+      if (addEntry(entry, force)) {
         els.input.value = '';
-        showAlert('success', 'Added', 'Entry saved successfully');
+        if (!force) showAlert('success', 'Added', 'Entry saved successfully');
       }
     }
 
@@ -198,12 +205,17 @@
 
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
       els.input.value = pastedText;
-      setTimeout(() => processText(pastedText.trim()), 50);
+      setTimeout(() => processText(pastedText.trim(), false), 50); // normal paste → no force
     });
 
-    // Manual Add button
+    // Normal Add button (blocks duplicates)
     document.getElementById('process-data').onclick = () => {
-      processText(els.input.value.trim());
+      processText(els.input.value.trim(), false);
+    };
+
+    // Force Add button (allows duplicates)
+    document.getElementById('force-add').onclick = () => {
+      processText(els.input.value.trim(), true);
     };
 
     function renderTable() {
