@@ -152,24 +152,31 @@
       return d;
     }
 
-    function hasDuplicateIdentifier(utr, lrNo) {
-      const normalizedUtr = utr?.trim().toLowerCase() || '';
-      const normalizedLr  = lrNo?.trim().toLowerCase() || '';
+    function getDuplicateField(utr, lrNo, drsNo, challanNo) {
+      const normUtr    = utr?.trim().toLowerCase() || '';
+      const normLr     = lrNo?.trim().toLowerCase() || '';
+      const normDrs    = drsNo?.trim().toLowerCase() || '';
+      const normChallan = challanNo?.trim().toLowerCase() || '';
 
-      return entries.some(e => {
-        const eUtr = e.utrNo?.trim().toLowerCase() || '';
-        const eLr  = e.lrNo?.trim().toLowerCase() || '';
-        return (normalizedUtr && eUtr === normalizedUtr) || (normalizedLr && eLr === normalizedLr);
-      });
+      for (const e of entries) {
+        if (normUtr    && e.utrNo?.trim().toLowerCase() === normUtr)    return 'UTR No';
+        if (normLr     && e.lrNo?.trim().toLowerCase() === normLr)      return 'LR No';
+        if (normDrs    && e.drsNo?.trim().toLowerCase() === normDrs)    return 'DRS No';
+        if (normChallan && e.challanNo?.trim().toLowerCase() === normChallan) return 'Challan No';
+      }
+      return null;
     }
 
     function addEntry(entry, force = false) {
-      if (!force && hasDuplicateIdentifier(entry.utrNo, entry.lrNo)) {
-        showAlert('error', 'Duplicate Identifier', 'This UTR No or LR No is already used in another entry.');
-        return false;
+      if (!force) {
+        const duplicateField = getDuplicateField(entry.utrNo, entry.lrNo, entry.drsNo, entry.challanNo);
+        if (duplicateField) {
+          showAlert('error', 'Duplicate Found', `This ${duplicateField} is already used in another entry.`);
+          return false;
+        }
       }
       if (force) {
-        showAlert('warning', 'Forced Entry', 'Entry added (duplicate UTR/LR allowed)');
+        showAlert('warning', 'Forced Entry', 'Entry added (duplicate allowed)');
       }
       entries.unshift(entry);
       localStorage.setItem('paymentHistory', JSON.stringify(entries));
@@ -197,7 +204,7 @@
       }
     }
 
-    // Paste handler – only one execution per paste
+    // Paste handler
     els.input.addEventListener('paste', (e) => {
       if (isProcessingPaste) return;
       isProcessingPaste = true;
@@ -205,15 +212,15 @@
 
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
       els.input.value = pastedText;
-      setTimeout(() => processText(pastedText.trim(), false), 50); // normal paste → no force
+      setTimeout(() => processText(pastedText.trim(), false), 50);
     });
 
-    // Normal Add button (blocks duplicates)
+    // Normal Add (blocks duplicates)
     document.getElementById('process-data').onclick = () => {
       processText(els.input.value.trim(), false);
     };
 
-    // Force Add button (allows duplicates)
+    // Force Add (allows duplicates)
     document.getElementById('force-add').onclick = () => {
       processText(els.input.value.trim(), true);
     };
