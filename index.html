@@ -34,7 +34,6 @@
   </style>
 </head>
 <body>
-
   <header class="bg-white shadow-sm border-b border-gray-200">
     <div class="app-container py-5 flex justify-between items-center">
       <h1 class="text-3xl font-bold flex items-center gap-2">
@@ -43,11 +42,9 @@
       </h1>
     </div>
   </header>
-
   <main class="flex-grow py-10">
     <div class="app-container">
       <div id="alert" class="hidden card p-5 mb-8 border-l-4 alert-slide"></div>
-
       <div class="card p-7 mb-10">
         <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
           <i class="fas fa-file-import text-blue-600 text-2xl"></i> Paste Payment Request
@@ -62,7 +59,6 @@
           </button>
         </div>
       </div>
-
       <div id="history-section" class="card p-7 hidden">
         <div class="flex justify-between items-center mb-7 flex-wrap gap-4">
           <h2 class="text-xl font-bold flex items-center gap-3">
@@ -73,7 +69,6 @@
             <button id="clear-all" class="btn btn-red"><i class="fas fa-trash-can"></i> Clear All</button>
           </div>
         </div>
-
         <div class="overflow-x-auto rounded-xl border border-gray-200">
           <table class="min-w-full text-sm">
             <thead>
@@ -99,19 +94,15 @@
       </div>
     </div>
   </main>
-
   <footer class="bg-white border-t border-gray-200 py-6 mt-auto">
     <div class="app-container text-center text-sm text-gray-500">
       © <span id="current-year"></span> RPM Logistics Pvt. Ltd.
     </div>
   </footer>
-
   <script>
     document.getElementById('current-year').textContent = new Date().getFullYear();
-
     let entries = [];
     try { entries = JSON.parse(localStorage.getItem('paymentHistory') || '[]'); } catch(e) {}
-
     const els = {
       input: document.getElementById('input-message'),
       alert: document.getElementById('alert'),
@@ -136,32 +127,32 @@
     function parseMessage(text) {
       const d = {date:'',ledgerName:'',amount:'',trType:'',utrNo:'',lrBranch:'',lrNo:'',vehicleNo:'',challanNo:'',drsNo:'',remarks:''};
       text.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l => {
-        if(l.includes('*Date:*'))       d.date       = l.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
+        if(l.includes('*Date:*')) d.date = l.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
         if(l.includes('*Ledger Name:*')) d.ledgerName = l.split('*Ledger Name:*')[1]?.trim() || '';
-        if(l.includes('*Amount:*'))       d.amount      = l.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
-        if(l.includes('*Tr. Type:*'))     d.trType      = l.split('*Tr. Type:*')[1]?.trim() || '';
-        if(l.includes('*UTR No:*'))       d.utrNo       = l.split('*UTR No:*')[1]?.trim() || '';
-        if(l.includes('*LR Branch:*'))    d.lrBranch    = l.split('*LR Branch:*')[1]?.trim() || '';
-        if(l.includes('*LR No:*'))        d.lrNo        = l.split('*LR No:*')[1]?.trim() || '';
-        if(l.includes('*Vehicle No:*'))   d.vehicleNo   = l.split('*Vehicle No:*')[1]?.trim().toUpperCase() || '';
-        if(l.includes('*Challan No:*'))   d.challanNo   = l.split('*Challan No:*')[1]?.trim() || '';
-        if(l.includes('*DRS No:*'))       d.drsNo       = l.split('*DRS No:*')[1]?.trim() || '';
-        if(l.includes('*SP Remarks:*'))   d.remarks     = l.split('*SP Remarks:*')[1]?.trim() || '';
+        if(l.includes('*Amount:*')) d.amount = l.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
+        if(l.includes('*Tr. Type:*')) d.trType = l.split('*Tr. Type:*')[1]?.trim() || '';
+        if(l.includes('*UTR No:*')) d.utrNo = l.split('*UTR No:*')[1]?.trim() || '';
+        if(l.includes('*LR Branch:*')) d.lrBranch = l.split('*LR Branch:*')[1]?.trim() || '';
+        if(l.includes('*LR No:*')) d.lrNo = l.split('*LR No:*')[1]?.trim() || '';
+        if(l.includes('*Vehicle No:*')) d.vehicleNo = l.split('*Vehicle No:*')[1]?.trim().toUpperCase() || '';
+        if(l.includes('*Challan No:*')) d.challanNo = l.split('*Challan No:*')[1]?.trim() || '';
+        if(l.includes('*DRS No:*')) d.drsNo = l.split('*DRS No:*')[1]?.trim() || '';
+        if(l.includes('*SP Remarks:*')) d.remarks = l.split('*SP Remarks:*')[1]?.trim() || '';
       });
       if (!d.date) d.date = new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
       return d;
     }
 
     function getDuplicateField(utr, lrNo, drsNo, challanNo) {
-      const normUtr    = utr?.trim().toLowerCase() || '';
-      const normLr     = lrNo?.trim().toLowerCase() || '';
-      const normDrs    = drsNo?.trim().toLowerCase() || '';
+      const normUtr    = utr?.trim().toLowerCase()     || '';
+      const normLr     = lrNo?.trim().toLowerCase()    || '';
+      const normDrs    = drsNo?.trim().toLowerCase()   || '';
       const normChallan = challanNo?.trim().toLowerCase() || '';
 
       for (const e of entries) {
-        if (normUtr    && e.utrNo?.trim().toLowerCase() === normUtr)    return 'UTR No';
-        if (normLr     && e.lrNo?.trim().toLowerCase() === normLr)      return 'LR No';
-        if (normDrs    && e.drsNo?.trim().toLowerCase() === normDrs)    return 'DRS No';
+        if (normUtr    && e.utrNo?.trim().toLowerCase()    === normUtr)    return 'UTR No';
+        if (normLr     && e.lrNo?.trim().toLowerCase()     === normLr)     return 'LR No';
+        if (normDrs    && e.drsNo?.trim().toLowerCase()    === normDrs)    return 'DRS No';
         if (normChallan && e.challanNo?.trim().toLowerCase() === normChallan) return 'Challan No';
       }
       return null;
@@ -171,7 +162,7 @@
       if (!force) {
         const duplicateField = getDuplicateField(entry.utrNo, entry.lrNo, entry.drsNo, entry.challanNo);
         if (duplicateField) {
-          showAlert('error', 'Duplicate Found', `This ${duplicateField} is already used in another entry.`);
+          showAlert('error', 'Duplicate Found', `This ${duplicateField} is already used in another entry. Use "Force Add" if you want to proceed anyway.`);
           return false;
         }
       }
@@ -186,7 +177,6 @@
     }
 
     let isProcessingPaste = false;
-
     function processText(text, force = false) {
       if (!text.trim()) return;
       if (!isValidFormat(text)) {
@@ -209,27 +199,23 @@
       if (isProcessingPaste) return;
       isProcessingPaste = true;
       setTimeout(() => { isProcessingPaste = false; }, 400);
-
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
       els.input.value = pastedText;
       setTimeout(() => processText(pastedText.trim(), false), 50);
     });
 
-    // Normal Add (blocks duplicates)
     document.getElementById('process-data').onclick = () => {
       processText(els.input.value.trim(), false);
     };
 
-    // Force Add (allows duplicates)
     document.getElementById('force-add').onclick = () => {
       processText(els.input.value.trim(), true);
     };
 
     function renderTable() {
-      els.tableBody.innerHTML = entries.length 
-        ? '' 
+      els.tableBody.innerHTML = entries.length
+        ? ''
         : '<tr><td colspan="13" class="text-center py-16 text-gray-400 font-medium">No entries yet</td></tr>';
-
       entries.forEach((e, i) => {
         const tr = document.createElement('tr');
         tr.className = 'table-row';
