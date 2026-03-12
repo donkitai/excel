@@ -4,103 +4,432 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RPM Daily Payment Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
-    .card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 20px -4px rgba(0,0,0,0.12); }
-    .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; gap: 0.5rem; }
-    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 16px rgba(59,130,246,0.35); }
-    .btn-warning { background: #f59e0b; color: white; }
-    .btn-warning:hover { background: #d97706; transform: translateY(-2px) scale(1.02); }
-    .btn-red { background: #ef4444; color: white; }
-    .btn-red:hover { background: #dc2626; transform: translateY(-2px) scale(1.02); }
-    th { background: rgba(59,130,246,0.07); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; padding: 0.9rem 1rem; text-align: left; color: #475569; }
-    tr { transition: background-color 0.18s ease; }
-    tr:hover td { background: rgba(59,130,246,0.03); }
-    td { padding: 0.9rem 1rem; border-top: 1px solid #f1f5f9; }
-    .table-row { opacity: 0; transform: translateY(12px); animation: rowAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-    @keyframes rowAppear { to { opacity: 1; transform: translateY(0); } }
-    .alert-slide { animation: slideInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
-    @keyframes slideInDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .app-container { max-width: 1440px; margin: 0 auto; padding: 1.5rem; }
-    @media (min-width: 1024px) { .app-container { padding: 2.5rem; } }
-    textarea { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 1.1rem; font-family: 'Courier New', monospace; transition: border-color 0.2s, box-shadow 0.2s; resize: vertical; }
-    textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.12); outline: none; }
+    :root {
+      --red: #e63939;
+      --red-light: #fff0f0;
+      --red-glow: rgba(230,57,57,0.15);
+      --surface: #ffffff;
+      --surface-2: #f8f9fb;
+      --border: #eaedf2;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --text-label: #9ca3af;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--surface-2);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-badge {
+      background: var(--red);
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      padding: 0.22rem 0.55rem;
+      border-radius: 5px;
+    }
+
+    .brand-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sep { color: var(--border); font-size: 1.1rem; margin: 0 0.1rem; }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+
+    .topbar-meta {
+      font-size: 0.75rem;
+      color: var(--text-label);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── LAYOUT ── */
+    .app-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1.5rem 1.5rem 3rem;
+      flex: 1;
+    }
+
+    /* ── SECTION CARDS ── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-head {
+      padding: 0.9rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafbfc;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .section-title i { color: var(--red); font-size: 0.75rem; }
+
+    .section-body { padding: 1.25rem 1.4rem; }
+
+    /* ── TEXTAREA ── */
+    .paste-area {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--text);
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-height: 140px;
+    }
+
+    .paste-area:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px var(--red-glow);
+      outline: none;
+      background: white;
+    }
+
+    .paste-area::placeholder { color: var(--text-label); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: white;
+    }
+    .btn-primary:hover { background: #c02020; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(230,57,57,0.35); }
+
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+    }
+    .btn-warning:hover { background: #d97706; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: white;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: #cbd5e1; color: var(--text); background: #f8f9fb; }
+
+    .btn-danger {
+      background: white;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+    }
+    .btn-danger:hover { background: #fef2f2; border-color: #ef4444; }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+    .btn-success:hover { background: #059669; transform: translateY(-1px); }
+
+    /* ── ALERT ── */
+    #alert {
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.83rem;
+      font-weight: 500;
+      display: none;
+      align-items: center;
+      gap: 0.6rem;
+      animation: slideDown 0.3s ease;
+    }
+
+    #alert.show { display: flex; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      min-width: 1100px;
+    }
+
+    thead th {
+      background: #f4f6f9;
+      padding: 0.65rem 0.9rem;
+      text-align: left;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-label);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text);
+      font-weight: 400;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr {
+      opacity: 0;
+      animation: rowIn 0.4s ease forwards;
+    }
+
+    tbody tr:hover td { background: #fafbfc; }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .sno-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--red-light);
+      color: var(--red);
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .mono { font-family: 'Courier New', monospace; font-size: 0.78rem; color: #374151; }
+
+    .tag {
+      display: inline-block;
+      padding: 0.18rem 0.55rem;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .tag-red { background: var(--red-light); color: var(--red); }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.75rem;
+    }
+
+    .action-btn.edit { color: #3b82f6; }
+    .action-btn.edit:hover { background: #eff6ff; border-color: #bfdbfe; }
+    .action-btn.del { color: #ef4444; }
+    .action-btn.del:hover { background: #fef2f2; border-color: #fecaca; }
+
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-label);
+    }
+
+    .empty-state i { font-size: 2rem; margin-bottom: 0.75rem; display: block; opacity: 0.4; }
+    .empty-state p { font-size: 0.85rem; font-weight: 500; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-label);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
-  <header class="bg-white shadow-sm border-b border-gray-200">
-    <div class="app-container py-5 flex justify-between items-center">
-      <h1 class="text-3xl font-bold flex items-center gap-2">
-        <span class="text-gray-800">RPM</span>
-        <span class="text-blue-600">Daily Payment</span>
-      </h1>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-badge">RPM</span>
+      <span class="brand-name">Logistics</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-sub">Daily Payment Panel</span>
     </div>
+    <span class="topbar-meta" id="current-date"></span>
   </header>
-  <main class="flex-grow py-10">
-    <div class="app-container">
-      <div id="alert" class="hidden card p-5 mb-8 border-l-4 alert-slide"></div>
-      <div class="card p-7 mb-10">
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
-          <i class="fas fa-file-import text-blue-600 text-2xl"></i> Paste Payment Request
-        </h2>
-        <textarea id="input-message" rows="10" class="w-full text-sm focus:ring-0" placeholder="Paste your payment request message here (Ctrl + V)..."></textarea>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="process-data" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Entry
-          </button>
-          <button id="force-add" class="btn btn-warning">
-            <i class="fas fa-exclamation-triangle"></i> Force Add (Allow Duplicate)
-          </button>
+
+  <main style="flex:1;">
+    <div class="app-wrap">
+
+      <!-- ALERT -->
+      <div id="alert"></div>
+
+      <!-- INPUT SECTION -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-title"><i class="fas fa-paste"></i> Paste Payment Request</span>
         </div>
-      </div>
-      <div id="history-section" class="card p-7 hidden">
-        <div class="flex justify-between items-center mb-7 flex-wrap gap-4">
-          <h2 class="text-xl font-bold flex items-center gap-3">
-            <i class="fas fa-history text-emerald-600 text-xl"></i> Payment History
-          </h2>
-          <div class="flex gap-4 flex-wrap">
-            <button id="export-all" class="btn btn-primary"><i class="fas fa-file-excel"></i> Export All</button>
-            <button id="clear-all" class="btn btn-red"><i class="fas fa-trash-can"></i> Clear All</button>
+        <div class="section-body">
+          <textarea id="input-message" class="paste-area" rows="8" placeholder="Paste your WhatsApp payment request message here…"></textarea>
+          <div class="btn-row">
+            <button id="process-data" class="btn btn-primary">
+              <i class="fas fa-plus"></i> Add Entry
+            </button>
+            <button id="force-add" class="btn btn-warning">
+              <i class="fas fa-triangle-exclamation"></i> Force Add
+            </button>
           </div>
         </div>
-        <div class="overflow-x-auto rounded-xl border border-gray-200">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr>
-                <th>SNo</th>
-                <th>Date</th>
-                <th>Ledger Name</th>
-                <th>Amount</th>
-                <th>Tr Type</th>
-                <th>UTR No</th>
-                <th>LR Br</th>
-                <th>LR No</th>
-                <th>Vehicle No</th>
-                <th>Challan No</th>
-                <th>DRS No</th>
-                <th>Remarks</th>
-                <th class="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="history-table-body"></tbody>
-          </table>
+      </div>
+
+      <!-- HISTORY SECTION -->
+      <div class="section" id="history-section" style="display:none;">
+        <div class="section-head">
+          <span class="section-title"><i class="fas fa-table-list"></i> Payment History</span>
+          <div style="display:flex;gap:0.5rem;">
+            <button id="export-all" class="btn btn-success"><i class="fas fa-file-excel"></i> Export</button>
+            <button id="clear-all" class="btn btn-danger"><i class="fas fa-trash"></i> Clear All</button>
+          </div>
+        </div>
+        <div style="padding:1rem 1.4rem;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>Ledger Name</th>
+                  <th>Amount</th>
+                  <th>Tr. Type</th>
+                  <th>UTR No</th>
+                  <th>LR Branch</th>
+                  <th>LR No</th>
+                  <th>Vehicle No</th>
+                  <th>Challan No</th>
+                  <th>DRS No</th>
+                  <th>Remarks</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
+
     </div>
   </main>
-  <footer class="bg-white border-t border-gray-200 py-6 mt-auto">
-    <div class="app-container text-center text-sm text-gray-500">
-      © <span id="current-year"></span> RPM Logistics Pvt. Ltd.
-    </div>
-  </footer>
+
+  <footer>© <span id="current-year"></span> RPM Logistics Pvt. Ltd. — All rights reserved.</footer>
+
   <script>
     document.getElementById('current-year').textContent = new Date().getFullYear();
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
 
     let entries = [];
     try { entries = JSON.parse(localStorage.getItem('paymentHistory') || '[]'); } catch(e) {}
@@ -112,31 +441,33 @@
       historySection: document.getElementById('history-section')
     };
 
+    const alertColors = {
+      success: { bg:'#f0fdf4', border:'#86efac', text:'#166534', icon:'fa-circle-check' },
+      error:   { bg:'#fef2f2', border:'#fca5a5', text:'#991b1b', icon:'fa-circle-xmark' },
+      warning: { bg:'#fffbeb', border:'#fcd34d', text:'#92400e', icon:'fa-triangle-exclamation' },
+      info:    { bg:'#eff6ff', border:'#93c5fd', text:'#1e40af', icon:'fa-circle-info' }
+    };
+
     function showAlert(type, title, msg) {
-      const color = type === 'success' ? 'green' : type === 'error' ? 'red' : 'amber';
-      const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
-      els.alert.innerHTML = `<div class="flex items-center gap-3"><i class="fas fa-${icon} text-xl text-${color}-600"></i><div><h3 class="font-semibold text-${color}-800">${title}</h3><p class="text-sm text-${color}-700 mt-1">${msg}</p></div></div>`;
-      els.alert.className = `card p-5 border-l-4 border-${color}-500 bg-${color}-50 text-${color}-800 alert-slide`;
-      els.alert.classList.remove('hidden');
-      setTimeout(() => els.alert.classList.add('hidden'), 5000);
+      const c = alertColors[type] || alertColors.info;
+      els.alert.innerHTML = `<i class="fas ${c.icon}" style="color:${c.text};font-size:0.9rem;flex-shrink:0;"></i><span><strong>${title}:</strong> ${msg}</span>`;
+      els.alert.style.cssText = `background:${c.bg};border:1px solid ${c.border};color:${c.text};`;
+      els.alert.classList.add('show');
+      setTimeout(() => els.alert.classList.remove('show'), 4500);
     }
 
     function parseMessage(text) {
-      const d = {date:'',ledgerName:'',amount:'',trType:'',utrNo:'',lrBranch:'',lrNo:'',vehicleNo:'',challanNo:'',drsNo:'',remarks:''};
+      const d = { date:'', ledgerName:'', amount:'', trType:'', utrNo:'', lrBranch:'', lrNo:'', vehicleNo:'', challanNo:'', drsNo:'', remarks:'' };
       const lines = text.split('\n');
       let remarksStarted = false;
       const remarksLines = [];
-
       lines.forEach(l => {
         const t = l.trim();
-        if (remarksStarted) {
-          if (t) remarksLines.push(t);
-          return;
-        }
+        if (remarksStarted) { if (t) remarksLines.push(t); return; }
         if (!t) return;
         if (t.includes('*Date:*'))        d.date       = t.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
         if (t.includes('*Ledger Name:*')) d.ledgerName = t.split('*Ledger Name:*')[1]?.trim() || '';
-        if (t.includes('*Amount:*'))      d.amount     = t.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
+        if (t.includes('*Amount:*'))      d.amount     = t.split('*Amount:*')[1]?.trim().replace(/[^0-9.,]/g,'') || '';
         if (t.includes('*Tr. Type:*'))    d.trType     = t.split('*Tr. Type:*')[1]?.trim() || '';
         if (t.includes('*UTR No:*'))      d.utrNo      = t.split('*UTR No:*')[1]?.trim() || '';
         if (t.includes('*LR Branch:*'))   d.lrBranch   = t.split('*LR Branch:*')[1]?.trim() || '';
@@ -150,7 +481,6 @@
           remarksStarted = true;
         }
       });
-
       d.remarks = remarksLines.join(' ').trim();
       if (!d.date) d.date = new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
       return d;
@@ -160,7 +490,6 @@
       const normLr      = lrNo?.trim().toLowerCase()      || '';
       const normDrs     = drsNo?.trim().toLowerCase()     || '';
       const normChallan = challanNo?.trim().toLowerCase() || '';
-
       for (const e of entries) {
         if (normLr      && e.lrNo?.trim().toLowerCase()      === normLr)      return 'LR No';
         if (normDrs     && e.drsNo?.trim().toLowerCase()     === normDrs)     return 'DRS No';
@@ -171,28 +500,27 @@
 
     function addEntry(entry, force = false) {
       if (!force) {
-        const duplicateField = getDuplicateField(entry.lrNo, entry.drsNo, entry.challanNo);
-        if (duplicateField) {
-          showAlert('error', 'Duplicate Found', `This ${duplicateField} is already used in another entry. Use "Force Add" if you want to proceed anyway.`);
+        const dupField = getDuplicateField(entry.lrNo, entry.drsNo, entry.challanNo);
+        if (dupField) {
+          showAlert('error', 'Duplicate Found', `${dupField} already exists. Use "Force Add" to proceed anyway.`);
           return false;
         }
       }
-      if (force) showAlert('warning', 'Forced Entry', 'Entry added (duplicate allowed)');
       entries.unshift(entry);
       localStorage.setItem('paymentHistory', JSON.stringify(entries));
       renderTable();
-      els.historySection.classList.remove('hidden');
+      els.historySection.style.display = '';
       return true;
     }
 
     let isProcessingPaste = false;
 
     function processText(text, force = false) {
-      if (!text.trim()) return;
+      if (!text.trim()) { showAlert('error', 'Empty', 'Please paste a message first'); return; }
       const entry = parseMessage(text);
       if (addEntry(entry, force)) {
         els.input.value = '';
-        if (!force) showAlert('success', 'Added', 'Entry saved successfully');
+        showAlert(force ? 'warning' : 'success', force ? 'Force Added' : 'Success', force ? 'Entry added (duplicate allowed)' : 'Entry saved successfully');
       }
     }
 
@@ -208,31 +536,35 @@
     document.getElementById('process-data').onclick = () => processText(els.input.value.trim(), false);
     document.getElementById('force-add').onclick    = () => processText(els.input.value.trim(), true);
 
-    function renderTable() {
-      els.tableBody.innerHTML = entries.length
-        ? ''
-        : '<tr><td colspan="13" class="text-center py-16 text-gray-400 font-medium">No entries yet</td></tr>';
+    function cell(val, cls = '') {
+      return `<td class="${cls}">${val || '<span style="color:#d1d5db;">—</span>'}</td>`;
+    }
 
+    function renderTable() {
+      if (!entries.length) {
+        els.tableBody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><i class="fas fa-inbox"></i><p>No entries yet. Paste a payment request above.</p></div></td></tr>`;
+        return;
+      }
+      els.tableBody.innerHTML = '';
       entries.forEach((e, i) => {
         const tr = document.createElement('tr');
-        tr.className = 'table-row';
-        tr.style.animationDelay = `${Math.min(i * 0.07, 1.2)}s`;
+        tr.style.animationDelay = `${Math.min(i * 0.05, 0.8)}s`;
         tr.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${e.date}</td>
-          <td>${e.ledgerName}</td>
-          <td>${e.amount}</td>
-          <td>${e.trType}</td>
-          <td class="font-mono">${e.utrNo}</td>
-          <td>${e.lrBranch}</td>
-          <td>${e.lrNo}</td>
-          <td class="font-mono">${e.vehicleNo}</td>
-          <td>${e.challanNo}</td>
-          <td>${e.drsNo}</td>
-          <td>${e.remarks}</td>
-          <td class="text-right space-x-4">
-            <button onclick="editEntry(${i})" class="text-blue-600 hover:text-blue-800 transition-colors duration-200"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteEntry(${i})" class="text-red-600 hover:text-red-800 transition-colors duration-200"><i class="fas fa-trash-can"></i></button>
+          <td><span class="sno-badge">${i + 1}</span></td>
+          ${cell(e.date)}
+          <td><span style="font-weight:500;">${e.ledgerName || '—'}</span></td>
+          <td><span class="tag tag-red" style="font-family:'Courier New',monospace;">${e.amount || '—'}</span></td>
+          ${cell(e.trType)}
+          <td class="mono">${e.utrNo || '—'}</td>
+          ${cell(e.lrBranch)}
+          <td class="mono">${e.lrNo || '—'}</td>
+          <td class="mono">${e.vehicleNo || '—'}</td>
+          ${cell(e.challanNo)}
+          ${cell(e.drsNo)}
+          <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${e.remarks || ''}">${e.remarks || '—'}</td>
+          <td style="text-align:right;white-space:nowrap;">
+            <button onclick="editEntry(${i})" class="action-btn edit" title="Edit"><i class="fas fa-pen"></i></button>
+            <button onclick="deleteEntry(${i})" class="action-btn del" title="Delete" style="margin-left:4px;"><i class="fas fa-trash"></i></button>
           </td>`;
         els.tableBody.appendChild(tr);
       });
@@ -240,9 +572,13 @@
 
     window.editEntry = i => {
       const e = entries[i];
-      els.input.value = `💰 *Daily Payment Request*\n📅 *Date:* ${e.date}\n📋 *Ledger Name:* ${e.ledgerName}\n💰 *Amount:* ₹${e.amount}\n💳 *Tr. Type:* ${e.trType}\n🔢 *UTR No:* ${e.utrNo}\n🏢 *LR Branch:* ${e.lrBranch}\n📄 *LR No:* ${e.lrNo}\n🚗 *Vehicle No:* ${e.vehicleNo}\n📋 *Challan No:* ${e.challanNo}\n📑 *DRS No:* ${e.drsNo}\n📝 *SP Remarks:* ${e.remarks}`;
-      showAlert('info', 'Edit Mode', 'Make changes and click Add Entry');
-      window.scrollTo({top: 0, behavior: 'smooth'});
+      els.input.value = `💰 *Daily Payment Request*\n📅 *Date:* ${e.date}\n📋 *Ledger Name:* ${e.ledgerName}\n💰 *Amount:* ${e.amount}\n💳 *Tr. Type:* ${e.trType}\n🔢 *UTR No:* ${e.utrNo}\n🏢 *LR Branch:* ${e.lrBranch}\n📄 *LR No:* ${e.lrNo}\n🚗 *Vehicle No:* ${e.vehicleNo}\n📋 *Challan No:* ${e.challanNo}\n📑 *DRS No:* ${e.drsNo}\n📝 *SP Remarks:* ${e.remarks}`;
+      entries.splice(i, 1);
+      localStorage.setItem('paymentHistory', JSON.stringify(entries));
+      renderTable();
+      if (!entries.length) els.historySection.style.display = 'none';
+      showAlert('info', 'Edit Mode', 'Modify the message and click Add Entry');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.deleteEntry = i => {
@@ -250,7 +586,7 @@
       entries.splice(i, 1);
       localStorage.setItem('paymentHistory', JSON.stringify(entries));
       renderTable();
-      if (!entries.length) els.historySection.classList.add('hidden');
+      if (!entries.length) els.historySection.style.display = 'none';
       showAlert('success', 'Deleted', 'Entry removed successfully');
     };
 
@@ -259,22 +595,22 @@
       const data = entries.map((e, i) => ({
         SNo: i + 1,
         Date: e.date,
-        'Ledger name': e.ledgerName,
+        'Ledger Name': e.ledgerName,
         Amount: e.amount,
         'Tr Type': e.trType,
-        'Utr Number': e.utrNo,
-        'LR Br': e.lrBranch,
-        LRNUMBER: e.lrNo,
+        'UTR Number': e.utrNo,
+        'LR Branch': e.lrBranch,
+        'LR Number': e.lrNo,
         'Vehicle Number': e.vehicleNo,
         'Challan No': e.challanNo,
         'DRS Number': e.drsNo,
-        'Sp remarks': e.remarks
+        'SP Remarks': e.remarks
       }));
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Payments');
       XLSX.writeFile(wb, `rpm_payments_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      showAlert('success', 'Exported', 'File downloaded successfully');
+      showAlert('success', 'Exported', 'Excel file downloaded successfully');
     };
 
     document.getElementById('clear-all').onclick = () => {
@@ -282,13 +618,13 @@
       entries = [];
       localStorage.setItem('paymentHistory', '[]');
       renderTable();
-      els.historySection.classList.add('hidden');
+      els.historySection.style.display = 'none';
       showAlert('success', 'Cleared', 'All entries removed');
     };
 
     if (entries.length) {
       renderTable();
-      els.historySection.classList.remove('hidden');
+      els.historySection.style.display = '';
     }
   </script>
 </body>
