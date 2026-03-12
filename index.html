@@ -121,11 +121,6 @@
       setTimeout(() => els.alert.classList.add('hidden'), 5000);
     }
 
-    function isValidFormat(text) {
-      const required = ['*Date:*', '*Ledger Name:*', '*Amount:*', '*Vehicle No:*'];
-      return required.every(f => text.includes(f));
-    }
-
     function parseMessage(text) {
       const d = {date:'',ledgerName:'',amount:'',trType:'',utrNo:'',lrBranch:'',lrNo:'',vehicleNo:'',challanNo:'',drsNo:'',remarks:''};
       text.split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
@@ -178,15 +173,7 @@
 
     function processText(text, force = false) {
       if (!text.trim()) return;
-      if (!isValidFormat(text)) {
-        showAlert('error', 'Invalid Format', 'Required fields (*Date:*, *Ledger Name:*, *Amount:*, *Vehicle No:*) are missing.');
-        return;
-      }
       const entry = parseMessage(text);
-      if (!entry.ledgerName || !entry.amount || !entry.vehicleNo) {
-        showAlert('error', 'Incomplete Data', 'Ledger Name, Amount, and Vehicle No are required.');
-        return;
-      }
       if (addEntry(entry, force)) {
         els.input.value = '';
         if (!force) showAlert('success', 'Added', 'Entry saved successfully');
