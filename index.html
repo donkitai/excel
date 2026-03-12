@@ -123,19 +123,35 @@
 
     function parseMessage(text) {
       const d = {date:'',ledgerName:'',amount:'',trType:'',utrNo:'',lrBranch:'',lrNo:'',vehicleNo:'',challanNo:'',drsNo:'',remarks:''};
-      text.split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
-        if (l.includes('*Date:*'))        d.date       = l.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
-        if (l.includes('*Ledger Name:*')) d.ledgerName = l.split('*Ledger Name:*')[1]?.trim() || '';
-        if (l.includes('*Amount:*'))      d.amount     = l.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
-        if (l.includes('*Tr. Type:*'))    d.trType     = l.split('*Tr. Type:*')[1]?.trim() || '';
-        if (l.includes('*UTR No:*'))      d.utrNo      = l.split('*UTR No:*')[1]?.trim() || '';
-        if (l.includes('*LR Branch:*'))   d.lrBranch   = l.split('*LR Branch:*')[1]?.trim() || '';
-        if (l.includes('*LR No:*'))       d.lrNo       = l.split('*LR No:*')[1]?.trim() || '';
-        if (l.includes('*Vehicle No:*'))  d.vehicleNo  = l.split('*Vehicle No:*')[1]?.trim().toUpperCase() || '';
-        if (l.includes('*Challan No:*'))  d.challanNo  = l.split('*Challan No:*')[1]?.trim() || '';
-        if (l.includes('*DRS No:*'))      d.drsNo      = l.split('*DRS No:*')[1]?.trim() || '';
-        if (l.includes('*SP Remarks:*'))  d.remarks    = l.split('*SP Remarks:*')[1]?.trim() || '';
+      const lines = text.split('\n');
+      let remarksStarted = false;
+      const remarksLines = [];
+
+      lines.forEach(l => {
+        const t = l.trim();
+        if (remarksStarted) {
+          if (t) remarksLines.push(t);
+          return;
+        }
+        if (!t) return;
+        if (t.includes('*Date:*'))        d.date       = t.split('*Date:*')[1]?.trim().replace(/[^0-9\/-]/g,'') || '';
+        if (t.includes('*Ledger Name:*')) d.ledgerName = t.split('*Ledger Name:*')[1]?.trim() || '';
+        if (t.includes('*Amount:*'))      d.amount     = t.split('*Amount:*')[1]?.trim().replace(/[^0-9.₹]/g,'') || '';
+        if (t.includes('*Tr. Type:*'))    d.trType     = t.split('*Tr. Type:*')[1]?.trim() || '';
+        if (t.includes('*UTR No:*'))      d.utrNo      = t.split('*UTR No:*')[1]?.trim() || '';
+        if (t.includes('*LR Branch:*'))   d.lrBranch   = t.split('*LR Branch:*')[1]?.trim() || '';
+        if (t.includes('*LR No:*'))       d.lrNo       = t.split('*LR No:*')[1]?.trim() || '';
+        if (t.includes('*Vehicle No:*'))  d.vehicleNo  = t.split('*Vehicle No:*')[1]?.trim().toUpperCase() || '';
+        if (t.includes('*Challan No:*'))  d.challanNo  = t.split('*Challan No:*')[1]?.trim() || '';
+        if (t.includes('*DRS No:*'))      d.drsNo      = t.split('*DRS No:*')[1]?.trim() || '';
+        if (t.includes('*SP Remarks:*')) {
+          const firstLine = t.split('*SP Remarks:*')[1]?.trim() || '';
+          if (firstLine) remarksLines.push(firstLine);
+          remarksStarted = true;
+        }
       });
+
+      d.remarks = remarksLines.join(' ').trim();
       if (!d.date) d.date = new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
       return d;
     }
